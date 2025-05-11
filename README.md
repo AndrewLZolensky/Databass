@@ -5,6 +5,12 @@ A Distributed Tabular Database with Load-Balancing, Replication, and Recovery
 + Shell Interface
 + Networked Interface
 + Thread-Safe Database Operations
+- Distribution
+- Replication
+- Consistency
+- Fault-Tolerance
+- Scalability
+- Crash Detection
 
 # Interface
 ```
