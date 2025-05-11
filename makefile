@@ -24,7 +24,7 @@ $(SERVER): $(SERVER_OBJS)
 
 # Clean rule
 clean:
-	rm -f $(SERVER) *.o
+	rm -f $(SERVER) *.o Tablet/*.o Util/*.o
 
 # Run server with default settings
 run_server:
