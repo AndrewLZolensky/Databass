@@ -246,7 +246,7 @@ std::string execute_command(const std::string& command) {
 int main(int argc, char** argv) {
 
     // set prompt
-    std::string prompt = "DataStore % ";
+    std::string prompt = "DataStore% ";
 
     // loop reading commands from stdin
     std::string permbuf;

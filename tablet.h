@@ -5,6 +5,7 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include <unistd.h>
 
 /**
  * @class Tablet
@@ -17,6 +18,21 @@ class Tablet {
 
     /* public methods */
     public:
+
+        Tablet() {
+            pthread_mutex_init(&admin, NULL);
+        }
+
+        ~Tablet() {
+            
+            // Destroy all row locks
+            for (auto& [key, mutex] : locks) {
+                pthread_mutex_destroy(&mutex);
+            }
+            
+            // Destroy the admin lock
+            pthread_mutex_destroy(&admin);
+        }
         /**
          * @brief Retrieve the byte vector at the specified row and column.
          *
@@ -67,6 +83,10 @@ class Tablet {
          * is the stored std::vector<char> blob.
          */
         std::unordered_map<std::string, std::unordered_map<std::string, std::vector<char>>> table;
+
+        std::unordered_map<std::string, pthread_mutex_t> locks;
+
+        pthread_mutex_t admin;
 };
 
 #endif
