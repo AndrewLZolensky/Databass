@@ -6,7 +6,7 @@ LDFLAGS = -pthread -luuid -lresolv
 SERVER = server
 
 # Source files
-SERVER_SRCS = server.cpp tablet.cpp iotool.cpp
+SERVER_SRCS = server.cpp Tablet/tablet.cpp Util/iotool.cpp
 
 # Object files
 SERVER_OBJS = $(SERVER_SRCS:.cpp=.o)
