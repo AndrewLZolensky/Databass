@@ -3,147 +3,12 @@
 #include <errno.h>
 #include <optional>
 #include <sstream>
-#include "tablet.h"
+#include "Tablet/tablet.h"
+#include "Util/iotool.h"
 
 #define BUF_SIZE 1024 * 1024
 
 Tablet tab;
-
-/**
- * @brief Read until max bytes, retrying on EINTR.
- *
- * @param fd File descriptor to read from.
- * @param buf Buffer to store read data (must be at least bytes_expected bytes).
- * @param bytes_expected Maximum bytes to read.
- * @param delim Delimiter string to search for.
- * @return Total bytes read (including delimiter if found),
- *         0 on EOF, or -1 on error.
- */
-ssize_t do_read(int fd, char* buf, ssize_t bytes_expected) {
-
-    // track bytes read
-    ssize_t bytes_read = 0;
-
-    // loop while we have not read the expected number of bytes
-    while (bytes_read < bytes_expected) {
-        ssize_t temp_num_read = read(fd, buf + bytes_read, bytes_expected - bytes_read);
-        if (temp_num_read < 0) {
-            if (errno == EINTR) {
-                continue;
-            }
-            return -1;
-        } else if (temp_num_read == 0) {
-            return 0;
-        }
-
-        // increment num read
-        bytes_read += temp_num_read;
-    }
-
-    // if we break on EOF return bytes read
-    return bytes_read;
-}
-
-/**
- * @brief Read until delimiter, retrying on EINTR. Once finished, data is stored in buf.data()
- *
- * @param fd File descriptor to read from.
- * @param buf Buffer to store read data (must be at least bytes_expected bytes).
- * @param bytes_expected Maximum bytes to read.
- * @param delim Delimiter string to search for.
- * @return Total bytes read (including delimiter if found),
- *         0 on EOF, or -1 on error.
- */
-ssize_t read_until_delimiter(int fd, std::string& buf, ssize_t chunk_size, const std::string& delim) {
-
-    // track bytes read
-    ssize_t bytes_read = 0;
-    char temp_buf[chunk_size];
-
-    // clear buf
-    buf.clear();
-
-    // loop while we have not read the expected number of bytes
-    while (true) {
-        ssize_t temp_num_read = read(fd, temp_buf, chunk_size);
-        if (temp_num_read < 0) {
-            if (errno == EINTR) {
-                continue;
-            }
-            return -1;
-        } else if (temp_num_read == 0) {
-            return 0;
-        }
-
-        // add data to buf
-        buf.append(temp_buf, temp_num_read);
-        bytes_read += temp_num_read;
-        
-
-        // search for delimiter and if found return true
-        size_t pos = buf.find(delim);
-        if (pos != std::string::npos) {
-            break;
-        }
-
-    }
-
-    // if we break on EOF return bytes read
-    return bytes_read;
-}
-
-/**
- * @brief Write buffer, retrying on EINTR/EAGAIN.
- *
- * @param fd File descriptor to write to.
- * @param buf Data to write.
- * @param bytes_expected Number of bytes from buf to write.
- * @return Total bytes written (buf + delimiter),
- *         -1 on error, or 0 on unexpected EOF.
- */
-ssize_t do_write(int fd, const char* buf, ssize_t bytes_expected) {
-
-    // write buffer
-    ssize_t bytes_written = 0;
-    while (bytes_written < bytes_expected) {
-        ssize_t temp_num_written = write(fd, buf + bytes_written, bytes_expected - bytes_written);
-        if (temp_num_written < 0) {
-            if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK) {
-                continue;
-            }
-            return -1;
-        } else if (temp_num_written == 0) {
-            return 0;
-        }
-        bytes_written += temp_num_written;
-    }
-    return bytes_written;
-}
-
-/**
- * @brief Parse command from string buffer by extracting up to delim, returning and clearing through delim
- *
- * @param buf string buffer to extract command from
- * @param delim delim to parse on
- * @return command up to delim if present, nullopt if none
- */
-std::optional<std::string> parse_command(std::string& buf, const std::string& delim) {
-    
-    // ensure delimiter is present, if not return nullopt
-    auto it = buf.find(delim);
-    if (it == std::string::npos) {
-        return std::nullopt;
-    }
-
-    // extract portion of buf up to delim
-    std::string res = buf.substr(0, it);
-
-    // clear portion of buf up to delim
-    buf = buf.substr(it + delim.size());
-
-    // return extract
-    return res;
-}
 
 /**
  * @brief Parse and execute command according to protocol (delim was already parsed out)
@@ -264,7 +129,7 @@ int main(int argc, char** argv) {
 
         // parse available commands and continue
         while (true) {
-            auto command_opt = parse_command(permbuf, "\n"); // if command found, removes from permanent buffer!
+            auto command_opt = parse_next_command(permbuf, "\n"); // if command found, removes from permanent buffer!
             if (!command_opt.has_value()) {
                 break;
             }

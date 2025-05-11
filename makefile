@@ -3,19 +3,19 @@ CXXFLAGS = -std=c++17 -Wall -Wextra -pthread
 LDFLAGS = -pthread -luuid -lresolv
 
 # Target executables
-SHL = shell
+SERVER = server
 
 # Source files
-SHL_SRCS = shell.cpp tablet.cpp
+SERVER_SRCS = server.cpp tablet.cpp iotool.cpp
 
 # Object files
-SHL_OBJS = $(SHL_SRCS:.cpp=.o)
+SERVER_OBJS = $(SERVER_SRCS:.cpp=.o)
 
 # Default target
-all: $(SHL)
+all: $(SERVER)
 
 # Server executable
-$(SHL): $(SHL_OBJS)
+$(SERVER): $(SERVER_OBJS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 # Generic rule for building object files
@@ -24,10 +24,10 @@ $(SHL): $(SHL_OBJS)
 
 # Clean rule
 clean:
-	rm -f $(SHL) *.o
+	rm -f $(SERVER) *.o
 
 # Run server with default settings
-run_shell:
-	./$(SHL)
+run_server:
+	./$(SERVER)
 
-.PHONY: all clean shell
+.PHONY: all clean server
