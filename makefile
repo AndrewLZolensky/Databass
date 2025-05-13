@@ -4,18 +4,25 @@ LDFLAGS = -pthread -luuid -lresolv
 
 # Target executables
 SERVER = server
+COORDINATOR = coordinator
 
 # Source files
 SERVER_SRCS = server.cpp Tablet/tablet.cpp Util/iotool.cpp
+COORDINATOR_SRCS = coordinator.cpp Util/iotool.cpp
 
 # Object files
 SERVER_OBJS = $(SERVER_SRCS:.cpp=.o)
+COORDINATOR_OBJS = $(COORDINATOR_SRCS:.cpp=.o)
 
 # Default target
-all: $(SERVER)
+all: $(SERVER) $(COORDINATOR)
 
 # Server executable
 $(SERVER): $(SERVER_OBJS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+# Coordinator executable
+$(COORDINATOR): $(COORDINATOR_OBJS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 # Generic rule for building object files
@@ -24,10 +31,6 @@ $(SERVER): $(SERVER_OBJS)
 
 # Clean rule
 clean:
-	rm -f $(SERVER) *.o Tablet/*.o Util/*.o
+	rm -f $(SERVER) $(COORDINATOR) *.o Tablet/*.o Util/*.o
 
-# Run server with default settings
-run_server:
-	./$(SERVER)
-
-.PHONY: all clean server
+.PHONY: all clean

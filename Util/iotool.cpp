@@ -1,3 +1,4 @@
+#include <fstream>
 #include "iotool.h"
 
 ssize_t do_read(int fd, char* buf, ssize_t bytes_expected) {
@@ -98,4 +99,57 @@ std::optional<std::string> parse_next_command(std::string& buf, const std::strin
 
     // return extract
     return res;
+}
+
+bool parse_ip_config_at(const std::string& ip_config_path, std::string& ip, int& port, size_t line_nbr) {
+
+    // open ipconfig file
+    std::fstream config_file(ip_config_path);
+    if (!config_file.is_open()) {
+        return false;
+    }
+
+    // read lines of ip config file until ix
+    int curr_line_nbr = 0;
+    std::string curr_line;
+    bool ix_found;
+    while (getline(config_file, curr_line)) {
+        if (curr_line_nbr == line_nbr) {
+            ix_found = true;
+            break;
+        }
+    }
+
+    // if ix out of bounds, return false
+    if (!ix_found) {
+        return false;
+    }
+
+    // TODO: parse found line into ip and port
+    fprintf(stderr, "Parsed line (%s)\n", curr_line.c_str());
+
+    // TODO: fill arguments with ip and port
+
+    // TODO: return
+    return true;
+}
+
+bool parse_ip_config_full(const std::string& ip_config_path, std::unordered_map<int, struct server>& servers) {
+
+    // open ipconfig file
+    std::fstream config_file(ip_config_path);
+    if (!config_file.is_open()) {
+        return false;
+    }
+
+    // read lines of ip config file until ix
+    int curr_line_nbr = 0;
+    std::string curr_line;
+    while (getline(config_file, curr_line)) {
+        fprintf(stderr, "Parsed line (%s)\n", curr_line.c_str());
+        // TODO: parse found line into ip and port
+    }
+
+    // TODO: return
+    return true;
 }

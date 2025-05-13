@@ -50,6 +50,7 @@ bool debug;
 
 /**
  * @brief Parse and execute command according to protocol (delim was already parsed out)
+ * Startup: ./server -v -n <ip_config_file_line_nbr>
  *
  * RFC:
  *  GET:
@@ -225,6 +226,11 @@ void* thread_fn(void* args) {
 
 int main(int argc, char* argv[]) {
 
+    // TODO: parse server number and debug from command line args
+
+    // TODO: parse ip config file to get own ip and coordinator ip
+    ip = "0.0.0.0";
+
     // parse server port and whether to run in debug mode
     for (int i = 0; i < argc; i++) {
         if (strcmp(argv[i], "-p") == 0) {
@@ -248,9 +254,6 @@ int main(int argc, char* argv[]) {
     if (debug) {
         fprintf(stderr, "Parsed server ip, port: %s, %d\n", ip.c_str(), port);
     };
-
-    // set server ip
-    ip = "0.0.0.0";
 
     // create socket
     int server_socket = socket(PF_INET, SOCK_STREAM, 0);
@@ -294,8 +297,12 @@ int main(int argc, char* argv[]) {
     // listen on socket
     listen(server_socket, MAX_THREADS);
 
+    // TODO: set up heartbeats to coordinator
+
     // loop accepting connections
     while (true) {
+
+        // TODO: periodically send heatbeats to coordinator
 
         // init address struct for incoming client connection
         struct sockaddr_in client_address;

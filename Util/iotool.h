@@ -4,6 +4,19 @@
 #include <unistd.h>
 #include <string>
 #include <optional>
+#include <unordered_map>
+
+/**
+ * @brief server struct
+ * @param ip ip of server
+ * @param port port of server
+ * @param alive status of server
+ */
+struct server {
+    std::string ip;
+    int port;
+    bool alive;
+};
 
 /**
  * @brief Read until max bytes, retrying on EINTR.
@@ -48,5 +61,25 @@ ssize_t do_write(int fd, const char* buf, ssize_t bytes_expected);
  * @return command up to delim if present, nullopt if none
  */
 std::optional<std::string> parse_next_command(std::string& buf, const std::string& delim);
+
+/**
+ * @brief Parse ipconfig file to get ip and port at specific line
+ * @param ip to fill with parsed ip string
+ * @param port to fill with parsed port int
+ * @param ip_config_path path to ip config file
+ * @param line_nbr line number of line of ip config file to parse
+ * @return true if successful, false if not
+ */
+
+bool parse_ip_config_at(const std::string& ip_config_path, std::string& ip, int& port, size_t line_nbr);
+
+/**
+ * @brief Parse ipconfig file to get ip and port at all lines
+ * @param ip_config_path path to ip config file
+ * @param servers map to fill with server info
+ * @return true if successful, false if not
+ */
+
+ bool parse_ip_config_full(const std::string& ip_config_path, std::unordered_map<int, struct server>& servers);
 
 #endif
