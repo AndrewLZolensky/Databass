@@ -18,20 +18,27 @@ class Tablet {
     /* public methods */
     public:
 
+        /**
+         * @brief constructor for tablet class
+         */
         Tablet() {
             pthread_mutex_init(&admin, NULL);
         }
 
+        /**
+         * @brief destructor for tablet class
+         */
         ~Tablet() {
 
             // destroy all row locks
-            for (auto& [key, mutex] : locks) {
-                pthread_mutex_destroy(&mutex);
+            for (auto& [row, lock] : locks) {
+                pthread_mutex_destroy(&lock);
             }
 
             // destroy admin lock
             pthread_mutex_destroy(&admin);
         }
+
         /**
          * @brief Retrieve the byte vector at the specified row and column.
          *
@@ -83,8 +90,24 @@ class Tablet {
          */
         std::unordered_map<std::string, std::unordered_map<std::string, std::vector<char>>> table;
 
+        /**
+         * @brief One-level map: row key → lock
+         * 
+         * The map’s key is the row identifier.  Each value is a row-specific lock.
+         */
         std::unordered_map<std::string, pthread_mutex_t> locks;
 
+        /**
+         * @brief admin lock
+         * 
+         * Locks accesses to row locks
+         * GET and PUT will need to acquire this to acquire the row lock
+         * DELETE will hold onto this for as long as it needs to delete the row lock
+         * This means if DELETE is working, then either
+         * (a) GET/PUT already have the row lock, which will block the DELETE
+         * until they are done, or GET and PUT do not, in which case they will need
+         * to wait for DELETE to finish to acquire the admin lock, then the row lock
+         */
         pthread_mutex_t admin;
 };
 
