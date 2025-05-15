@@ -3,19 +3,19 @@
 make clean
 make
 
-./coordinator -v &
+./coordinator -v -c Res/ipconfig.txt -g 2 &
 coordinator_pid=$!
 
-./server -v -p 1 &
+./server -v -p 9001 -i 0.0.0.0 &
 server1_pid=$!
 
-./server -v -p 2 &
+./server -v -p 9002 -i 0.0.0.0 & &
 server2_pid=$!
 
-./server -v -p 3 &
+./server -v -p 9003 -i 0.0.0.0 & &
 server3_pid=$!
 
-./server -v -p 4 &
+./server -v -p 9004 -i 0.0.0.0 & &
 server4_pid=$!
 
 wait_for_exit() {
