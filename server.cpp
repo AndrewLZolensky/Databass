@@ -50,7 +50,6 @@ bool debug;
 
 /**
  * @brief Parse and execute command according to protocol (delim was already parsed out)
- * Startup: ./server -v -n <ip_config_file_line_nbr>
  *
  * RFC:
  *  GET:
@@ -164,8 +163,8 @@ void* thread_fn(void* args) {
     // set delim
     std::string delim = "\r\n";
 
-    // init exit flag
-    bool exit_flag = false;
+    // init exit flag ->> NOW: TRUE ->> CONNECTIONLESS
+    bool exit_flag = true;
 
     // loop reading commands from stdin
     std::string permbuf;
@@ -224,6 +223,9 @@ void* thread_fn(void* args) {
     return NULL;
 }
 
+/**
+ * Startup: ./server -v -n <ip_config_file_line_nbr>
+ */
 int main(int argc, char* argv[]) {
 
     // TODO: parse server number and debug from command line args

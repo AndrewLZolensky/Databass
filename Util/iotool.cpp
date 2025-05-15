@@ -1,4 +1,6 @@
 #include <fstream>
+#include <sstream>
+#include <vector>
 #include "iotool.h"
 
 ssize_t do_read(int fd, char* buf, ssize_t bytes_expected) {
@@ -83,6 +85,15 @@ ssize_t do_write(int fd, const char* buf, ssize_t bytes_expected) {
     return bytes_written;
 }
 
+bool tokenize(std::vector<std::string>& tokens, std::string& buffer, char delim) {
+    std::stringstream ss(buffer);
+    std::string token;
+    while (std::getline(ss, token, delim)) {
+        tokens.push_back(token);
+    }
+    return true;
+}
+
 std::optional<std::string> parse_next_command(std::string& buf, const std::string& delim) {
     
     // ensure delimiter is present, if not return nullopt
@@ -101,7 +112,10 @@ std::optional<std::string> parse_next_command(std::string& buf, const std::strin
     return res;
 }
 
-bool parse_ip_config_at(const std::string& ip_config_path, std::string& ip, int& port, size_t line_nbr) {
+bool parse_ip_config_at(const std::string& ip_config_path, struct sockaddr_in& servaddr, size_t line_nbr) {
+
+    // zero servaddr
+    bzero(&servaddr, sizeof(servaddr));
 
     // open ipconfig file
     std::fstream config_file(ip_config_path);
@@ -110,7 +124,7 @@ bool parse_ip_config_at(const std::string& ip_config_path, std::string& ip, int&
     }
 
     // read lines of ip config file until ix
-    int curr_line_nbr = 0;
+    size_t curr_line_nbr = 0;
     std::string curr_line;
     bool ix_found;
     while (getline(config_file, curr_line)) {
@@ -125,16 +139,33 @@ bool parse_ip_config_at(const std::string& ip_config_path, std::string& ip, int&
         return false;
     }
 
-    // TODO: parse found line into ip and port
-    fprintf(stderr, "Parsed line (%s)\n", curr_line.c_str());
+    // parse found line into ip and port
+    std::vector<std::string> tokens;
+    bool tokenize_succ = tokenize(tokens, curr_line, ',');
+    if (!tokenize_succ) {
+        fprintf(stderr, "parse_ip_config_at() failed to tokenize line (%ld) of ipconfigfile\n\n", line_nbr);
+        return false;
+    }
+    if (tokens.size() != 2) {
+        fprintf(stderr, "parse_ip_config_at() read incorrect number of chunks at line (%ld) of ipconfigfile\n", line_nbr);
+        return false;
+    }
 
-    // TODO: fill arguments with ip and port
+    // fill arguments with ip and port
+    std::string temp_ip = tokens[0];
+    int temp_port = std::atoi(tokens[1].c_str());
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(temp_port);
+    if (inet_pton(AF_INET, temp_ip.c_str(), &(servaddr.sin_addr)) <= 0) {
+        fprintf(stderr, "parse_ip_config_at() failed to create ip address from line (%ld) of ipconfigfile\n", line_nbr);
+        return false;
+    }
 
-    // TODO: return
+    // return
     return true;
 }
 
-bool parse_ip_config_full(const std::string& ip_config_path, std::unordered_map<int, struct server>& servers) {
+bool parse_ip_config_except(const std::string& ip_config_path, std::vector<struct sockaddr_in>& servers, size_t line_nbr) {
 
     // open ipconfig file
     std::fstream config_file(ip_config_path);
@@ -143,13 +174,51 @@ bool parse_ip_config_full(const std::string& ip_config_path, std::unordered_map<
     }
 
     // read lines of ip config file until ix
-    int curr_line_nbr = 0;
+    size_t curr_line_nbr = 0;
     std::string curr_line;
     while (getline(config_file, curr_line)) {
-        fprintf(stderr, "Parsed line (%s)\n", curr_line.c_str());
-        // TODO: parse found line into ip and port
+
+        // skip line nbr we want to avoid
+        if (curr_line_nbr == line_nbr) {
+            curr_line_nbr += 1;
+            continue;
+        }
+
+        // parse found line into ip and port
+        std::vector<std::string> tokens;
+        bool tokenize_succ = tokenize(tokens, curr_line, ',');
+        if (!tokenize_succ) {
+            fprintf(stderr, "parse_ip_config_except() failed to tokenize line (%ld) of ipconfigfile\n", curr_line_nbr);
+            return false;
+        }
+        if (tokens.size() != 2) {
+            fprintf(stderr, "parse_ip_config_except() read incorrect number of chunks in line (%ld) of ipconfigfile\n", curr_line_nbr);
+            return false;
+        }
+
+        // get server ip and port
+        std::string temp_ip = tokens[0];
+        int temp_port = std::atoi(tokens[1].c_str());
+
+        // create new address
+        // std::pair<std::string, int> temp_ip_port(temp_ip, temp_port);
+        struct sockaddr_in temp_servaddr;
+        bzero(&temp_servaddr, sizeof(temp_servaddr));
+        temp_servaddr.sin_family = AF_INET;
+        temp_servaddr.sin_port = htons(temp_port);
+        if (inet_pton(AF_INET, temp_ip.c_str(), &(temp_servaddr.sin_addr)) <= 0) {
+            fprintf(stderr, "parse_ip_config_except() failed to parse ip address on line (%ld) of ipconfigfile\n", curr_line_nbr);
+            return false;
+        }
+
+        // add server with ip and port to result
+        servers.push_back(temp_servaddr);
+
+        // increment line nbr
+        curr_line_nbr += 1;
+        
     }
 
-    // TODO: return
+    // return
     return true;
 }

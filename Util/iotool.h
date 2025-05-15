@@ -5,6 +5,8 @@
 #include <string>
 #include <optional>
 #include <unordered_map>
+#include <bits/stdc++.h>
+#include <arpa/inet.h>
 
 /**
  * @brief server struct
@@ -71,15 +73,15 @@ std::optional<std::string> parse_next_command(std::string& buf, const std::strin
  * @return true if successful, false if not
  */
 
-bool parse_ip_config_at(const std::string& ip_config_path, std::string& ip, int& port, size_t line_nbr);
+bool parse_ip_config_at(const std::string& ip_config_path, struct sockaddr_in& servaddr, size_t line_nbr);
 
 /**
- * @brief Parse ipconfig file to get ip and port at all lines
+ * @brief Parse ipconfig file to get ip and port at all lines except the one given by line nbr (probably the coordinator)
  * @param ip_config_path path to ip config file
  * @param servers map to fill with server info
  * @return true if successful, false if not
  */
 
- bool parse_ip_config_full(const std::string& ip_config_path, std::unordered_map<int, struct server>& servers);
+ bool parse_ip_config_except(const std::string& ip_config_path, std::vector<struct sockaddr_in>& servers, size_t line_nbr);
 
 #endif

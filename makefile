@@ -8,7 +8,7 @@ COORDINATOR = coordinator
 
 # Source files
 SERVER_SRCS = server.cpp Tablet/tablet.cpp Util/iotool.cpp
-COORDINATOR_SRCS = coordinator.cpp Util/iotool.cpp
+COORDINATOR_SRCS = coordinator.cpp Util/iotool.cpp Util/admin.cpp
 
 # Object files
 SERVER_OBJS = $(SERVER_SRCS:.cpp=.o)
